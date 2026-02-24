@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARQ 1331 - Estación de Carga Logística</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        :root { --pucv-blue: #0070C0; --eco-green: #2ecc71; --gain-gold: #FFD700; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; color: #333; background: #f4f7f9; margin: 0; padding-bottom: 20px; }
+        
+        .header { background: var(--pucv-blue); color: white; padding: 20px 10px; text-align: center; border-bottom: 4px solid #005a9c; }
+        .header h1 { font-size: 1.2rem; margin: 0; text-transform: uppercase; }
+        .header p { font-size: 0.9rem; margin: 5px 0 0; opacity: 0.9; }
+
+        .container { max-width: 1600px; margin: 10px auto; display: grid; grid-template-columns: 1fr 2fr; gap: 15px; padding: 0 10px; }
+        
+        /* En móviles, pasamos a una sola columna */
+        @media (max-width: 1024px) { .container { grid-template-columns: 1fr; } }
+
+        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; }
+        .panel-viz { display: flex; flex-direction: column; gap: 15px; }
+
+        h2 { font-size: 1rem; color: var(--pucv-blue); border-bottom: 2px solid #eee; margin: 20px 0 10px; padding-bottom: 5px; }
+        h2:first-of-type { margin-top: 0; }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .card { padding: 15px 10px; border-radius: 8px; text-align: center; font-weight: bold; border: 1px solid #ddd; }
+        
+        .math-box { background: #121212; color: #00ff41; padding: 15px; border-radius: 6px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; margin-top: 10px; white-space: pre-wrap; border-left: 5px solid #00ff41; overflow-x: auto; }
+        
+        .input-group { background: #fdfdfd; padding: 12px; border: 1px solid #eaeaea; border-radius: 8px; margin-bottom: 12px; }
+        label { display: block; font-weight: bold; margin: 10px 0 5px; font-size: 0.85rem; }
+
+        input, select, button, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+        textarea { height: 80px; resize: none; font-family: inherit; }
+        
+        button { background: var(--pucv-blue); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { filter: brightness(1.1); }
+        button.secondary { background: #555; font-size: 0.8rem; }
+
+        .viz-box { width: 100%; height: 400px; background: white; border-radius: 10px; border: 1px solid #eee; }
+        
+        /* Tabla de alumnos responsive */
+        .table-wrapper { overflow-x: auto; width: 100%; }
+        .student-list { width: 100%; border-collapse: collapse; min-width: 300px; }
+        .student-list th { text-align: left; padding: 8px; border-bottom: 1px solid #eee; color: #666; font-size: 0.8rem; }
+        .student-list td { padding: 5px; }
+
+        .status-bar { text-align: center; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>ESTRUCTURA I - CASO C: LOGÍSTICA DE CARGA</h1>
+    <p>e[ad] Escuela de Arquitectura y Diseño PUCV | Prof. Guillermo A. Olivares M.</p>
+</div>
+
+<div class="container">
+    <div class="panel">
+        <div class="dashboard">
+            <div class="card" style="background: #fff9db; color: #856404;">GANANCIA<br>$<span id="dispGain">0</span></div>
+            <div class="card" style="background: #e8f5e9; color: #2e7d32;">CO2<br><span id="dispCO2">0</span> kg</div>
+        </div>
+
+        <div class="input-group">
+            <h2>1. Cubicador de Materiales</h2>
+            <select id="matSel">
+                <option value="Corcho|240|800|1">Corcho (Renta:$ / CO2:-)</option>
+                <option value="Madera|600|1800|5">Madera (Renta:$$ / CO2:m)</option>
+                <option value="Hormigón|2400|5000|45">Hormigón (Renta:$$$ / CO2:+)</option>
+                <option value="Acero|7850|12000|180">Acero (Renta:$$$$ / CO2:++)</option>
+            </select>
+            <label>Volumen a añadir (m³):</label>
+            <input type="number" id="volInput" value="1.0" step="0.5" min="0.5">
+            <button onclick="agregarCarga()" style="background: var(--eco-green);">+ INSERTAR AL CONTENEDOR</button>
+            <div id="listaBodega" style="font-size: 0.8rem; margin-top:10px; color: #555;"></div>
+        </div>
+
+        <div class="input-group">
+            <h2>2. Geometría de Rampa y Tiro</h2>
+            <label>Inclinación Rampa (α): <span id="valA">25</span>°</label>
+            <input type="range" id="angA" min="0" max="60" value="25" oninput="update()">
+            <label>Apertura Cuerdas (θ): <span id="valT">40</span>°</label>
+            <input type="range" id="angT" min="5" max="150" value="40" oninput="update()">
+            <label>N° Total de Alumnos:</label>
+            <input type="number" id="nT" value="10" min="1" oninput="update()">
+        </div>
+
+        <div class="input-group">
+            <h2>3. Comentario de Estrategia</h2>
+            <textarea id="comentarioGrupo" placeholder="Describan su estrategia aquí..."></textarea>
+        </div>
+
+        <h2>4. Memoria de Cálculo</h2>
+        <div class="math-box" id="desgloseMath"></div>
+        <button onclick="bajarTXT()" class="secondary">⬇ DESCARGAR MEMORIA (.TXT)</button>
+
+        <div class="input-group" style="margin-top:20px;">
+            <h2>5. Identidad del Grupo</h2>
+            <input type="text" id="nombreGrupo" placeholder="Nombre del Equipo">
+            <div class="table-wrapper">
+                <table class="student-list">
+                    <thead><tr><th>Nombre</th><th>RUT (puntos y guion)</th></tr></thead>
+                    <tbody id="alumnosBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <button onclick="finalizarJSON()" style="background:#dc3545; padding:15px; font-size:1rem;">📦 GENERAR ARCHIVO .JSON</button>
+    </div>
+
+    <div class="panel panel-viz">
+        <div>
+            <h2>Vista Superior: Ley del Paralelogramo</h2>
+            <div id="grafico2d" class="viz-box"></div>
+        </div>
+        <div>
+            <h2>Vista de Elevación: Descomposición en Rampa</h2>
+            <div id="graficoLateral" class="viz-box"></div>
+        </div>
+        <div id="statusMsg" class="status-bar"></div>
+    </div>
+</div>
+
+<script>
+    let bodega = [];
+    const MU = 0.3;
+
+    // Crear 10 filas de alumnos
+    const body = document.getElementById('alumnosBody');
+    for(let i=1; i<=10; i++){
+        body.innerHTML += `<tr><td><input type="text" id="n_${i}" placeholder="Alumno ${i}"></td>
+                               <td><input type="text" id="r_${i}" placeholder="12.345.678-9"></td></tr>`;
+    }
+
+    function agregarCarga() {
+        const raw = document.getElementById('matSel').value.split('|');
+        const v = parseFloat(document.getElementById('volInput').value);
+        if (bodega.reduce((a,b) => a+b.v, 0) + v > 10) return alert("Volumen máximo excedido");
+        bodega.push({name: raw[0], v, d: parseFloat(raw[1]), gain: parseFloat(raw[2])*v, co2: parseFloat(raw[3])*v});
+        render();
+    }
+
+    function render() {
+        document.getElementById('listaBodega').innerHTML = bodega.map((c,i) => `<div>📦 ${c.v}m³ ${c.name} (${(c.v*c.d).toFixed(0)}kg) <span onclick="bodega.splice(${i},1);render()" style="color:red;cursor:pointer;">[x]</span></div>`).join('');
+        update();
+    }
+
+    function update() {
+        const alphaDeg = parseFloat(document.getElementById('angA').value);
+        const thetaDeg = parseFloat(document.getElementById('angT').value);
+        const alpha = alphaDeg * Math.PI / 180;
+        const theta = thetaDeg * Math.PI / 180;
+        const nT = parseInt(document.getElementById('nT').value);
+        
+        document.getElementById('valA').innerText = alphaDeg;
+        document.getElementById('valT').innerText = thetaDeg;
+
+        let detMasa = "--- DETALLE DE CUBICACIÓN ---\n";
+        let pesoTotal = 0;
+        bodega.forEach((c, i) => {
+            const m = c.v * c.d;
+            detMasa += `Bloque ${i+1}: ${c.v.toFixed(1)}m³ ${c.name} = ${m.toFixed(0)} kg\n`;
+            pesoTotal += m;
+        });
+
+        const bonus = 1 + (Math.sin(alpha) * 2);
+        const gainFinal = bodega.reduce((a,b) => a + b.gain, 0) * bonus;
+        const co2Total = bodega.reduce((a,b) => a + b.co2, 0);
+        
+        document.getElementById('dispGain').innerText = gainFinal.toFixed(0);
+        document.getElementById('dispCO2').innerText = co2Total.toFixed(0);
+
+        const Px = pesoTotal * Math.sin(alpha);
+        const Py = pesoTotal * Math.cos(alpha);
+        const Ff = MU * Py;
+        const R = Px + Ff;
+        const T = (nT * 70) * Math.cos(theta/2);
+        const Neto = T - R;
+
+        document.getElementById('desgloseMath').innerText = `${detMasa}\nPESO TOTAL (P): ${pesoTotal.toFixed(0)} kgf\nBONO ALTURA: x${bonus.toFixed(2)}\n\n--- ANÁLISIS VECTORIAL ---\nPx (Desliza): ${Px.toFixed(1)} kgf\nPy (Normal): ${Py.toFixed(1)} kgf\nFf (Roce): ${Ff.toFixed(1)} kgf\nTiro Efectivo: ${T.toFixed(1)} kgf\nBalance Neto: ${Neto.toFixed(1)} kgf`;
+
+        const esc = Math.max(2000, pesoTotal * 1.1);
+        const config = { responsive: true, displayModeBar: false };
+
+        // Plotly 2D
+        Plotly.react('grafico2d', [{x:[0,(nT*35)*Math.cos(theta/2)], y:[0,(nT*35)*Math.sin(theta/2)], mode:'lines+markers', name:'Cuerda 1', line:{color:'blue'}},{x:[0,(nT*35)*Math.cos(theta/2)], y:[0,-(nT*35)*Math.sin(theta/2)], mode:'lines+markers', name:'Cuerda 2', line:{color:'blue'}},{x:[0,T], y:[0,0], mode:'lines+markers', name:'Tiro Resultante', line:{color:'green',width:6}},{x:[0,-R], y:[0,0], mode:'lines+markers', name:'Resistencia R', line:{color:'red',width:4}}], {margin:{l:30,r:30,b:30,t:10}, xaxis:{range:[-esc,esc]}, yaxis:{range:[-esc/2,esc/2], scaleanchor:"x"}}, config);
+
+        // Plotly Lateral
+        const cosA = Math.cos(alpha); const sinA = Math.sin(alpha);
+        Plotly.react('graficoLateral', [{x:[-esc,esc], y:[-esc*Math.tan(alpha), esc*Math.tan(alpha)], mode:'lines', name:'Rampa', line:{color:'#eee', dash:'dot'}}, {x:[0,0], y:[0,-pesoTotal], mode:'lines+markers', name:'Peso G', line:{color:'black'}},{x:[0,-Py*sinA], y:[0,Py*cosA], mode:'lines+markers', name:'Normal N', line:{color:'orange'}},{x:[0,-R*cosA], y:[0,-R*sinA], mode:'lines+markers', name:'Resistencia R', line:{color:'red'}},{x:[0,T*cosA], y:[0,T*sinA], mode:'lines+markers', name:'Tiro F', line:{color:'green', width:7}}], {margin:{l:30,r:30,b:30,t:10}, xaxis:{range:[-esc,esc]}, yaxis:{range:[-esc,esc], scaleanchor:"x"}}, config);
+
+        const status = document.getElementById('statusMsg');
+        status.style.background = Neto > 0 ? "#d4edda" : "#f8d7da";
+        status.style.color = Neto > 0 ? "#155724" : "#721c24";
+        status.innerHTML = Neto > 0 ? "¡SISTEMA EN MOVIMIENTO! ▲" : "FUERZA INSUFICIENTE ▼";
+    }
+
+    function bajarTXT() {
+        const blob = new Blob([document.getElementById('desgloseMath').innerText], {type: "text/plain"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "Memoria_ARQ1331.txt"; a.click();
+    }
+
+    function finalizarJSON() {
+        let ints = [];
+        for(let i=1; i<=10; i++) {
+            let n = document.getElementById(`n_${i}`).value;
+            let r = document.getElementById(`r_${i}`).value;
+            if(n && r) ints.push({nombre: n, rut: r});
+        }
+        
+        const alpha = parseFloat(document.getElementById('angA').value);
+        const bonus = 1 + (Math.sin(alpha * Math.PI / 180) * 2);
+        const gainBase = bodega.reduce((a,b) => a + b.gain, 0);
+
+        const doc = { 
+            grupo: document.getElementById('nombreGrupo').value || "Sin_Nombre", 
+            integrantes: ints,
+            comentario: document.getElementById('comentarioGrupo').value,
+            metricas: {
+                ganancia_final: (gainBase * bonus).toFixed(0),
+                co2_total: bodega.reduce((a,b) => a + b.co2, 0).toFixed(0),
+                angulo_alfa: alpha
+            },
+            resultados_texto: document.getElementById('desgloseMath').innerText 
+        };
+        
+        const blob = new Blob([JSON.stringify(doc, null, 2)], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `S1_${doc.grupo.replace(/\s+/g, '_')}.json`; a.click();
+    }
+    window.onload = render;
+</script>
+</body>
+</html>
