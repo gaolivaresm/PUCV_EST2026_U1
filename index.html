@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARQ 1331 - Estructuras I | PUCV 2026</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap">
+    <style>
+        :root {
+            --pucv-blue: #0070C0;
+            --bg: #f8f9fa;
+            --text: #333;
+            --card-bg: #ffffff;
+        }
+        
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            line-height: 1.6;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+
+        header { border-bottom: 2px solid var(--pucv-blue); margin-bottom: 40px; padding-bottom: 20px; }
+        h1 { font-weight: 600; font-size: 1.5rem; margin: 0; color: var(--pucv-blue); }
+        p.subtitle { font-weight: 300; color: #666; margin: 5px 0 0; }
+
+        .unit-section { margin-bottom: 40px; }
+        .unit-title { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 15px; }
+
+        .activity-list { display: grid; gap: 15px; }
+        .activity-card { 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            color: inherit; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border: 1px solid #eee;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .activity-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: var(--pucv-blue);
+        }
+        
+        .info h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
+        .info span { font-size: 0.8rem; color: #999; }
+        
+        .status { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; background: #e8f4fd; color: var(--pucv-blue); }
+
+        footer { margin-top: 60px; font-size: 0.8rem; color: #aaa; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .activity-card { flex-direction: column; align-items: flex-start; }
+            .status { margin-top: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>ARQ 1331 — Estructuras I</h1>
+        <p class="subtitle">Repositorio de Actividades y Herramientas Digitales | 2026</p>
+    </header>
+
+    <main>
+        <section class="unit-section">
+            <div class="unit-title">Unidad 1: Percepción, Medida y Vectores</div>
+            <div class="activity-list">
+                
+                <a href="./001_actividad_U1.html" class="activity-card">
+                    <div class="info">
+                        <h3>Tarea 001: Logística de Carga</h3>
+                        <span>Sesión 01 — Plano Inclinado y Acuerdo de Fuerzas</span>
+                    </div>
+                    <div class="status">ACTIVA</div>
+                </a>
+
+                <div class="activity-card" style="opacity: 0.5; cursor: not-allowed;">
+                    <div class="info">
+                        <h3>Tarea 002: Percepción y Bitácora</h3>
+                        <span>Sesión 02 — Próximamente</span>
+                    </div>
+                    <div class="status" style="background: #eee; color: #999;">BLOQUEADA</div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Prof. Guillermo A. Olivares M. | e[ad] Escuela de Arquitectura y Diseño PUCV</p>
+        <p><a href="https://www.taett.cl" style="color: inherit; text-decoration: none;">taett.cl</a></p>
+    </footer>
+</div>
+
+</body>
+</html>
